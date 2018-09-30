@@ -71,6 +71,7 @@ type Session interface {
 	// If there are buffered signals when a channel is registered, they will be
 	// sent in order on the channel immediately after registering.
 	Signals(c chan<- Signal)
+	SubSys() string
 }
 
 // maxSigBufSize is how many signals will be buffered
@@ -108,6 +109,7 @@ type session struct {
 	ctx     Context
 	sigCh   chan<- Signal
 	sigBuf  []Signal
+	subsys  string
 }
 
 func (sess *session) Write(p []byte) (n int, err error) {
@@ -186,6 +188,10 @@ func (sess *session) Pty() (Pty, <-chan Window, bool) {
 		return *sess.pty, sess.winch, true
 	}
 	return Pty{}, sess.winch, false
+}
+
+func (sess *session) SubSys() string {
+	return sess.subsys
 }
 
 func (sess *session) Signals(c chan<- Signal) {
@@ -280,7 +286,17 @@ func (sess *session) handleRequests(reqs <-chan *gossh.Request) {
 			// TODO: option/callback to allow agent forwarding
 			SetAgentRequested(sess.ctx)
 			req.Reply(true, nil)
+		case "subsystem":
+			var payload = struct{ Value string }{}
+			gossh.Unmarshal(req.Payload, &payload)
+			sess.subsys = payload.Value
+			if payload.Value == "sftp" {
+				sess.handler(sess)
+			} else {
+				req.Reply(false, nil)
+			}
 		default:
+			//log.Println(req.Type, string(req.Payload))
 			// TODO: debug log
 		}
 	}

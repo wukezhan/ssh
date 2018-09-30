@@ -42,6 +42,9 @@ type PasswordHandler func(ctx Context, password string) bool
 // PtyCallback is a hook for allowing PTY sessions.
 type PtyCallback func(ctx Context, pty Pty) bool
 
+// SftpCallback is a hook for allowing PTY sessions.
+type SftpCallback func(ctx Context, sess *Session) bool
+
 // ConnCallback is a hook for new connections before handling.
 // It allows wrapping for timeouts and limiting by returning
 // the net.Conn that will be used as the underlying connection.

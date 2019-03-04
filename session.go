@@ -291,9 +291,10 @@ func (sess *session) handleRequests(reqs <-chan *gossh.Request) {
 			gossh.Unmarshal(req.Payload, &payload)
 			sess.subsys = payload.Value
 			if payload.Value == "sftp" {
+				req.Reply(true, nil)
 				sess.handler(sess)
 			} else {
-				req.Reply(false, nil)
+				req.Reply(true, nil)
 			}
 		default:
 			//log.Println(req.Type, string(req.Payload))
